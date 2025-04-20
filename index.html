@@ -67,62 +67,51 @@
     let numbers = [];
     let selected = [];
     let score = 0;
+    let mistakes = 0;
     let gameOver = false;
     let timer;
     let timeRemaining = TIME_LIMIT;
     let animationFrames = [];
     let targetOrder = [];
 
-    // ランキングをローカルストレージに保存
     function saveScore(score) {
-      const today = new Date().toISOString().slice(0, 10); // "2025-04-20" 形式
+      const today = new Date().toISOString().slice(0, 10);
       const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
-
       if (!rankings[today]) rankings[today] = [];
-
       rankings[today].push(score);
-
-      // 上位5件だけ残す
       rankings[today] = rankings[today].sort((a, b) => b - a).slice(0, 5);
-
       localStorage.setItem('dailyRankings', JSON.stringify(rankings));
     }
 
-    // ランキングを表示
     function showRanking() {
       const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
       const today = new Date().toISOString().slice(0, 10);
       const scores = rankings[today] || [];
-
       const html = scores.map((score, i) => `<li>${i + 1}位: ${score}点</li>`).join('');
       document.getElementById('ranking').innerHTML = `<ul>${html}</ul>`;
       document.getElementById('rankingScreen').style.display = 'block';
       document.getElementById('homeScreen').style.display = 'none';
     }
 
-    // ホーム画面を表示
     function showHome() {
       document.getElementById('homeScreen').style.display = 'block';
       document.getElementById('gameScreen').style.display = 'none';
       document.getElementById('rankingScreen').style.display = 'none';
     }
 
-    // ゲーム開始前の準備
     function prepareGame() {
       document.getElementById('homeScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
-
       selected = [];
       score = 0;
+      mistakes = 0;
       timeRemaining = TIME_LIMIT;
       gameOver = false;
       document.getElementById('score').innerText = score;
       document.getElementById('timer').innerText = timeRemaining;
       document.getElementById('message').innerText = '';
-
       generateNumbers();
       targetOrder = [...numbers];
-
       let countdown = 3;
       const orderText = document.getElementById('order');
       orderText.innerText = '順番: ' + targetOrder.join(', ');
@@ -138,13 +127,11 @@
       }, 1000);
     }
 
-    // ゲームスタート
     function startGame() {
       displayNumbers();
       timer = setInterval(updateTimer, 1000);
     }
 
-    // 数字を生成
     function generateNumbers() {
       const uniqueSet = new Set();
       while (uniqueSet.size < NUM_COUNT) {
@@ -153,77 +140,64 @@
       numbers = Array.from(uniqueSet);
     }
 
-    // 数字を画面に表示
     function displayNumbers() {
       const container = document.getElementById('gameContainer');
       container.innerHTML = '';
       animationFrames.forEach(cancelAnimationFrame);
       animationFrames = [];
-
       numbers.forEach(num => {
         const button = document.createElement('button');
         button.innerText = num;
         button.className = 'button';
         container.appendChild(button);
-
         let posX = Math.random() * (container.clientWidth - 30);
         let posY = Math.random() * (container.clientHeight - 30);
         let dx = (Math.random() - 0.5) * 4;
         let dy = (Math.random() - 0.5) * 4;
-
         function animate() {
           posX += dx;
           posY += dy;
-
           if (posX < 0 || posX > container.clientWidth - 30 || posY < 0 || posY > container.clientHeight - 30) {
             dx = (Math.random() - 0.5) * 4;
             dy = (Math.random() - 0.5) * 4;
             posX = Math.max(0, Math.min(posX, container.clientWidth - 30));
             posY = Math.max(0, Math.min(posY, container.clientHeight - 30));
           }
-
           button.style.left = `${posX}px`;
           button.style.top = `${posY}px`;
-
           const frameId = requestAnimationFrame(animate);
           animationFrames.push(frameId);
         }
-
         animate();
-
         button.addEventListener('click', () => handleClick(num, button));
       });
     }
 
-    // 数字をクリックしたときの処理
     function handleClick(num, button) {
       if (gameOver || selected.includes(num)) return;
-
       const expected = targetOrder[selected.length];
       const message = document.getElementById('message');
-
       if (num !== expected) {
+        mistakes++;
         message.innerText = '違う順番です！';
         setTimeout(() => { message.innerText = ''; }, 1500);
         return;
       }
-
       selected.push(num);
-      score += 10;
       document.getElementById('score').innerText = score;
       button.remove();
       message.innerText = '';
-
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
         gameOver = true;
+        let finalScore = (selected.length * 10) + ((TIME_LIMIT - (TIME_LIMIT - timeRemaining)) * 2) + (mistakes === 0 ? 100 : 0) + (mistakes * -5);
+        score = finalScore;
         saveScore(score);
         alert('🎉 ゲームクリア！あなたのスコアは ' + score + ' 点');
         showHome();
       }
     }
 
-    // タイマーの更新
     function updateTimer() {
       const timerElement = document.getElementById('timer');
       timeRemaining--;
@@ -236,8 +210,8 @@
       }
     }
 
-    // 初期画面の表示
     document.addEventListener('DOMContentLoaded', showHome);
   </script>
 </body>
 </html>
+
