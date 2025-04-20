@@ -90,12 +90,13 @@
       const orderText = document.getElementById('order');
       orderText.innerText = '順番: ' + targetOrder.join(', ');
       const countdownInterval = setInterval(() => {
-        orderText.innerText = `開始まで ${countdown}...`;
-        countdown--;
-        if (countdown < 0) {
+        if (countdown === 0) {
           clearInterval(countdownInterval);
           orderText.innerText = '';
           startGame();
+        } else {
+          orderText.innerText = `順番: ${targetOrder.join(', ')}\n開始まで ${countdown}...`;
+          countdown--;
         }
       }, 1000);
     }
@@ -127,16 +128,16 @@
 
         let posX = Math.random() * (container.clientWidth - 30);
         let posY = Math.random() * (container.clientHeight - 30);
-        let dx = (Math.random() - 0.5) * 2;
-        let dy = (Math.random() - 0.5) * 2;
+        let dx = (Math.random() - 0.5) * 4;
+        let dy = (Math.random() - 0.5) * 4;
 
         function animate() {
           posX += dx;
           posY += dy;
 
           if (posX < 0 || posX > container.clientWidth - 30 || posY < 0 || posY > container.clientHeight - 30) {
-            dx = (Math.random() - 0.5) * 2;
-            dy = (Math.random() - 0.5) * 2;
+            dx = (Math.random() - 0.5) * 4;
+            dy = (Math.random() - 0.5) * 4;
             posX = Math.max(0, Math.min(posX, container.clientWidth - 30));
             posY = Math.max(0, Math.min(posY, container.clientHeight - 30));
           }
@@ -196,3 +197,4 @@
   </script>
 </body>
 </html>
+
