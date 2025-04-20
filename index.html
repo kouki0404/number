@@ -16,14 +16,6 @@
       border: none;
       color: #000;
       cursor: pointer;
-      animation: move 3s linear infinite;
-    }
-    @keyframes move {
-      0% { transform: translate(0px, 0px); }
-      25% { transform: translate(20px, -10px); }
-      50% { transform: translate(-10px, 10px); }
-      75% { transform: translate(10px, -5px); }
-      100% { transform: translate(0px, 0px); }
     }
     .container {
       position: relative;
@@ -64,6 +56,7 @@
     let gameOver = false;
     let timer;
     let timeRemaining = TIME_LIMIT;
+    let moveIntervals = [];
 
     function showHome() {
       document.getElementById('homeScreen').style.display = 'block';
@@ -96,25 +89,44 @@
     function displayNumbers() {
       const container = document.getElementById('gameContainer');
       container.innerHTML = '';
+      moveIntervals.forEach(clearInterval); // stop previous movements
+      moveIntervals = [];
 
       numbers.forEach(num => {
         const button = document.createElement('button');
         button.innerText = num;
         button.className = 'button';
-        button.style.left = `${Math.random() * 90}%`;
-        button.style.top = `${Math.random() * 80}%`;
-        button.addEventListener('click', () => handleClick(num, button));
         container.appendChild(button);
+
+        let posX = Math.random() * (container.clientWidth - 30);
+        let posY = Math.random() * (container.clientHeight - 30);
+        button.style.left = `${posX}px`;
+        button.style.top = `${posY}px`;
+
+        const move = setInterval(() => {
+          posX += Math.random() * 20 - 10;
+          posY += Math.random() * 20 - 10;
+
+          posX = Math.max(0, Math.min(posX, container.clientWidth - 30));
+          posY = Math.max(0, Math.min(posY, container.clientHeight - 30));
+
+          button.style.left = `${posX}px`;
+          button.style.top = `${posY}px`;
+        }, 500);
+
+        moveIntervals.push(move);
+        button.addEventListener('click', () => handleClick(num, button, move));
       });
     }
 
-    function handleClick(num, button) {
+    function handleClick(num, button, moveInterval) {
       if (gameOver || selected.includes(num)) return;
 
       selected.push(num);
       score += 10;
       document.getElementById('score').innerText = score;
       button.remove();
+      clearInterval(moveInterval);
 
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
