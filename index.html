@@ -26,12 +26,16 @@
       overflow: hidden;
       margin-top: 20px;
     }
-    .timer, .score, .orderDisplay {
+    .timer, .score, .orderDisplay, .message {
       font-size: 20px;
       margin: 10px;
     }
     #homeScreen, #gameScreen {
       display: none;
+    }
+    .message {
+      color: red;
+      height: 24px;
     }
   </style>
 </head>
@@ -46,6 +50,7 @@
     <div class="timer">残り時間: <span id="timer">30</span> 秒</div>
     <div class="score">スコア: <span id="score">0</span></div>
     <div class="orderDisplay">押す順番: <span id="order"></span></div>
+    <div class="message" id="message"></div>
     <div id="gameContainer" class="container"></div>
   </div>
 
@@ -76,18 +81,20 @@
       gameOver = false;
       document.getElementById('score').innerText = score;
       document.getElementById('timer').innerText = timeRemaining;
+      document.getElementById('message').innerText = '';
 
       generateNumbers();
       targetOrder = [...numbers];
-      document.getElementById('order').innerText = targetOrder.join(', ');
 
       let countdown = 3;
+      const orderText = document.getElementById('order');
+      orderText.innerText = '順番: ' + targetOrder.join(', ');
       const countdownInterval = setInterval(() => {
-        document.getElementById('order').innerText = `開始まで ${countdown}...`;
+        orderText.innerText = `開始まで ${countdown}...`;
         countdown--;
         if (countdown < 0) {
           clearInterval(countdownInterval);
-          document.getElementById('order').innerText = '順番: ' + targetOrder.join(', ');
+          orderText.innerText = '';
           startGame();
         }
       }, 1000);
@@ -151,8 +158,11 @@
       if (gameOver || selected.includes(num)) return;
 
       const expected = targetOrder[selected.length];
+      const message = document.getElementById('message');
+
       if (num !== expected) {
-        alert('違う順番です！');
+        message.innerText = '違う順番です！';
+        setTimeout(() => { message.innerText = ''; }, 1500);
         return;
       }
 
@@ -160,6 +170,7 @@
       score += 10;
       document.getElementById('score').innerText = score;
       button.remove();
+      message.innerText = '';
 
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
@@ -185,4 +196,3 @@
   </script>
 </body>
 </html>
-
