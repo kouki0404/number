@@ -62,6 +62,16 @@
   </div>
 
   <script>
+    function resetDailyRankingIfNeeded() {
+      const today = new Date().toISOString().slice(0, 10);
+      const lastDate = localStorage.getItem('lastRankingDate');
+      if (lastDate !== today) {
+        localStorage.setItem('dailyRankings', JSON.stringify({}));
+        localStorage.setItem('lastRankingDate', today);
+      }
+    }
+    resetDailyRankingIfNeeded();
+
     const NUM_COUNT = 5;
     const TIME_LIMIT = 30;
     let numbers = [];
@@ -184,14 +194,16 @@
         return;
       }
       selected.push(num);
-      document.getElementById('score').innerText = score;
       button.remove();
       message.innerText = '';
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
         gameOver = true;
-        let finalScore = (selected.length * 10) + ((TIME_LIMIT - (TIME_LIMIT - timeRemaining)) * 2) + (mistakes === 0 ? 100 : 0) + (mistakes * -5);
-        score = finalScore;
+        let correctPoints = selected.length * 10;
+        let timeBonus = timeRemaining * 2;
+        let mistakePenalty = mistakes * -5;
+        let noMissBonus = (mistakes === 0) ? 100 : 0;
+        score = correctPoints + timeBonus + mistakePenalty + noMissBonus;
         saveScore(score);
         alert('🎉 ゲームクリア！あなたのスコアは ' + score + ' 点');
         showHome();
@@ -214,4 +226,3 @@
   </script>
 </body>
 </html>
-
