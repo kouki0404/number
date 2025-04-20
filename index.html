@@ -30,7 +30,7 @@
       font-size: 20px;
       margin: 10px;
     }
-    #homeScreen, #gameScreen {
+    #homeScreen, #gameScreen, #rankingScreen {
       display: none;
     }
     .message {
@@ -44,6 +44,7 @@
     <h1>🎯 数字ハンター</h1>
     <p>制限時間内にすべての数字をタップせよ！</p>
     <button onclick="prepareGame()">ゲーム開始</button>
+    <button onclick="showRanking()">ランキングを見る</button>
   </div>
 
   <div id="gameScreen">
@@ -52,6 +53,12 @@
     <div class="orderDisplay">押す順番: <span id="order"></span></div>
     <div class="message" id="message"></div>
     <div id="gameContainer" class="container"></div>
+  </div>
+
+  <div id="rankingScreen">
+    <h1>デイリーランキング</h1>
+    <div id="ranking"></div>
+    <button onclick="showHome()">ホームに戻る</button>
   </div>
 
   <script>
@@ -66,11 +73,41 @@
     let animationFrames = [];
     let targetOrder = [];
 
+    // ランキングをローカルストレージに保存
+    function saveScore(score) {
+      const today = new Date().toISOString().slice(0, 10); // "2025-04-20" 形式
+      const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
+
+      if (!rankings[today]) rankings[today] = [];
+
+      rankings[today].push(score);
+
+      // 上位5件だけ残す
+      rankings[today] = rankings[today].sort((a, b) => b - a).slice(0, 5);
+
+      localStorage.setItem('dailyRankings', JSON.stringify(rankings));
+    }
+
+    // ランキングを表示
+    function showRanking() {
+      const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
+      const today = new Date().toISOString().slice(0, 10);
+      const scores = rankings[today] || [];
+
+      const html = scores.map((score, i) => `<li>${i + 1}位: ${score}点</li>`).join('');
+      document.getElementById('ranking').innerHTML = `<ul>${html}</ul>`;
+      document.getElementById('rankingScreen').style.display = 'block';
+      document.getElementById('homeScreen').style.display = 'none';
+    }
+
+    // ホーム画面を表示
     function showHome() {
       document.getElementById('homeScreen').style.display = 'block';
       document.getElementById('gameScreen').style.display = 'none';
+      document.getElementById('rankingScreen').style.display = 'none';
     }
 
+    // ゲーム開始前の準備
     function prepareGame() {
       document.getElementById('homeScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
@@ -101,11 +138,13 @@
       }, 1000);
     }
 
+    // ゲームスタート
     function startGame() {
       displayNumbers();
       timer = setInterval(updateTimer, 1000);
     }
 
+    // 数字を生成
     function generateNumbers() {
       const uniqueSet = new Set();
       while (uniqueSet.size < NUM_COUNT) {
@@ -114,6 +153,7 @@
       numbers = Array.from(uniqueSet);
     }
 
+    // 数字を画面に表示
     function displayNumbers() {
       const container = document.getElementById('gameContainer');
       container.innerHTML = '';
@@ -155,6 +195,7 @@
       });
     }
 
+    // 数字をクリックしたときの処理
     function handleClick(num, button) {
       if (gameOver || selected.includes(num)) return;
 
@@ -176,11 +217,13 @@
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
         gameOver = true;
+        saveScore(score);
         alert('🎉 ゲームクリア！あなたのスコアは ' + score + ' 点');
         showHome();
       }
     }
 
+    // タイマーの更新
     function updateTimer() {
       const timerElement = document.getElementById('timer');
       timeRemaining--;
@@ -193,8 +236,8 @@
       }
     }
 
+    // 初期画面の表示
     document.addEventListener('DOMContentLoaded', showHome);
   </script>
 </body>
 </html>
-
