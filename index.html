@@ -16,6 +16,7 @@
       border: none;
       color: #000;
       cursor: pointer;
+      user-select: none;
     }
     .container {
       position: relative;
@@ -56,7 +57,7 @@
     let gameOver = false;
     let timer;
     let timeRemaining = TIME_LIMIT;
-    let moveIntervals = [];
+    let animationFrames = [];
 
     function showHome() {
       document.getElementById('homeScreen').style.display = 'block';
@@ -89,8 +90,8 @@
     function displayNumbers() {
       const container = document.getElementById('gameContainer');
       container.innerHTML = '';
-      moveIntervals.forEach(clearInterval); // stop previous movements
-      moveIntervals = [];
+      animationFrames.forEach(cancelAnimationFrame);
+      animationFrames = [];
 
       numbers.forEach(num => {
         const button = document.createElement('button');
@@ -100,36 +101,45 @@
 
         let posX = Math.random() * (container.clientWidth - 30);
         let posY = Math.random() * (container.clientHeight - 30);
-        button.style.left = `${posX}px`;
-        button.style.top = `${posY}px`;
+        let dx = (Math.random() - 0.5) * 2;
+        let dy = (Math.random() - 0.5) * 2;
 
-        const move = setInterval(() => {
-          posX += Math.random() * 20 - 10;
-          posY += Math.random() * 20 - 10;
+        function animate() {
+          posX += dx;
+          posY += dy;
 
-          posX = Math.max(0, Math.min(posX, container.clientWidth - 30));
-          posY = Math.max(0, Math.min(posY, container.clientHeight - 30));
+          // 壁に当たったら方向をランダムに変える
+          if (posX < 0 || posX > container.clientWidth - 30 || posY < 0 || posY > container.clientHeight - 30) {
+            dx = (Math.random() - 0.5) * 2;
+            dy = (Math.random() - 0.5) * 2;
+            posX = Math.max(0, Math.min(posX, container.clientWidth - 30));
+            posY = Math.max(0, Math.min(posY, container.clientHeight - 30));
+          }
 
           button.style.left = `${posX}px`;
           button.style.top = `${posY}px`;
-        }, 500);
 
-        moveIntervals.push(move);
-        button.addEventListener('click', () => handleClick(num, button, move));
+          const frameId = requestAnimationFrame(animate);
+          animationFrames.push(frameId);
+        }
+
+        animate();
+
+        button.addEventListener('click', () => handleClick(num, button));
       });
     }
 
-    function handleClick(num, button, moveInterval) {
+    function handleClick(num, button) {
       if (gameOver || selected.includes(num)) return;
 
       selected.push(num);
       score += 10;
       document.getElementById('score').innerText = score;
       button.remove();
-      clearInterval(moveInterval);
 
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
+        gameOver = true;
         alert('🎉 ゲームクリア！あなたのスコアは ' + score + ' 点');
         showHome();
       }
