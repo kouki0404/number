@@ -56,22 +56,12 @@
   </div>
 
   <div id="rankingScreen">
-    <h1>デイリーランキング</h1>
+    <h1>ランキング</h1>
     <div id="ranking"></div>
     <button onclick="showHome()">ホームに戻る</button>
   </div>
 
   <script>
-    function resetDailyRankingIfNeeded() {
-      const today = new Date().toISOString().slice(0, 10);
-      const lastDate = localStorage.getItem('lastRankingDate');
-      if (lastDate !== today) {
-        localStorage.setItem('dailyRankings', JSON.stringify({}));
-        localStorage.setItem('lastRankingDate', today);
-      }
-    }
-    resetDailyRankingIfNeeded();
-
     const NUM_COUNT = 5;
     const TIME_LIMIT = 30;
     let numbers = [];
@@ -85,19 +75,16 @@
     let targetOrder = [];
 
     function saveScore(score) {
-      const today = new Date().toISOString().slice(0, 10);
-      const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
-      if (!rankings[today]) rankings[today] = [];
-      rankings[today].push(score);
-      rankings[today] = rankings[today].sort((a, b) => b - a).slice(0, 5);
-      localStorage.setItem('dailyRankings', JSON.stringify(rankings));
+      const rankings = JSON.parse(localStorage.getItem('globalRankings') || '[]');
+      rankings.push(score);
+      rankings.sort((a, b) => b - a);
+      const uniqueScores = [...new Set(rankings)].slice(0, 10); // 上位10件保持
+      localStorage.setItem('globalRankings', JSON.stringify(uniqueScores));
     }
 
     function showRanking() {
-      const rankings = JSON.parse(localStorage.getItem('dailyRankings') || '{}');
-      const today = new Date().toISOString().slice(0, 10);
-      const scores = rankings[today] || [];
-      const html = scores.map((score, i) => `<li>${i + 1}位: ${score}点</li>`).join('');
+      const rankings = JSON.parse(localStorage.getItem('globalRankings') || '[]');
+      const html = rankings.map((score, i) => `<li>${i + 1}位: ${score}点</li>`).join('');
       document.getElementById('ranking').innerHTML = `<ul>${html}</ul>`;
       document.getElementById('rankingScreen').style.display = 'block';
       document.getElementById('homeScreen').style.display = 'none';
@@ -194,16 +181,14 @@
         return;
       }
       selected.push(num);
+      document.getElementById('score').innerText = score;
       button.remove();
       message.innerText = '';
       if (selected.length === NUM_COUNT) {
         clearInterval(timer);
         gameOver = true;
-        let correctPoints = selected.length * 10;
-        let timeBonus = timeRemaining * 2;
-        let mistakePenalty = mistakes * -5;
-        let noMissBonus = (mistakes === 0) ? 100 : 0;
-        score = correctPoints + timeBonus + mistakePenalty + noMissBonus;
+        let finalScore = (selected.length * 10) + (timeRemaining * 2) + (mistakes === 0 ? 100 : 0) + (mistakes * -5);
+        score = finalScore;
         saveScore(score);
         alert('🎉 ゲームクリア！あなたのスコアは ' + score + ' 点');
         showHome();
